@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, Map as MapIcon, Building2, HeartPulse, Warehouse, AlertTriangle, MessageSquare, BarChart3, Truck, Play, LogOut, Shield } from 'lucide-react';
+import { LayoutDashboard, Map as MapIcon, Building2, HeartPulse, Warehouse, AlertTriangle, MessageSquare, BarChart3, Truck, LogOut, Shield } from 'lucide-react';
 
 const Sidebar = () => {
   const { user, logout } = useAuth();
@@ -22,7 +22,6 @@ const Sidebar = () => {
         { path: '/sos', label: 'SOS Requests', icon: AlertTriangle },
         { path: '/whatsapp', label: 'Comms Sim', icon: MessageSquare },
         { path: '/allocation', label: 'AI Allocation', icon: Truck },
-        { path: '/simulation', label: 'Demo Sim', icon: Play },
       ];
     }
     if (role === 'ngo_coordinator') {
@@ -30,7 +29,6 @@ const Sidebar = () => {
         ...commonLinks,
         { path: '/sos', label: 'SOS Requests', icon: AlertTriangle },
         { path: '/allocation', label: 'AI Allocation', icon: Truck },
-        { path: '/simulation', label: 'Demo Sim', icon: Play },
       ];
     }
     if (role === 'hospital_staff') {
