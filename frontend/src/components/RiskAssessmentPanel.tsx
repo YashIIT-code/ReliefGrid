@@ -83,14 +83,14 @@ const RiskAssessmentPanel: React.FC<RiskAssessmentPanelProps> = ({
           {/* Affected people */}
           <div className="flex gap-1">
             <dt className="text-slate-400">Affected people:</dt>
-            <dd className="text-slate-200">{assessment.affected_people.toLocaleString()}</dd>
+            <dd className="text-slate-200">{(assessment.affected_people ?? 0).toLocaleString()}</dd>
           </div>
 
           {/* Impact zone distance */}
           <div className="flex gap-1">
             <dt className="text-slate-400">Distance to impact zone:</dt>
             <dd className="text-slate-200">
-              {assessment.distance_from_impact_km !== null
+              {assessment.distance_from_impact_km != null
                 ? `${assessment.distance_from_impact_km} km`
                 : 'Impact distance unavailable'}
             </dd>
@@ -111,7 +111,7 @@ const RiskAssessmentPanel: React.FC<RiskAssessmentPanelProps> = ({
             </dd>
           </div>
 
-          {assessment.warehouse_distance_km !== null && (
+          {assessment.warehouse_distance_km != null && (
             <div className="flex gap-1">
               <dt className="text-slate-400">Warehouse distance:</dt>
               <dd className="text-slate-200">{assessment.warehouse_distance_km} km</dd>
@@ -122,7 +122,7 @@ const RiskAssessmentPanel: React.FC<RiskAssessmentPanelProps> = ({
           <div className="flex gap-1">
             <dt className="text-slate-400">Estimated delivery:</dt>
             <dd className="text-slate-200">
-              {assessment.estimated_delivery_minutes !== null
+              {assessment.estimated_delivery_minutes != null
                 ? `${assessment.estimated_delivery_minutes} minutes`
                 : 'Delivery estimate unavailable'}
             </dd>
@@ -133,7 +133,7 @@ const RiskAssessmentPanel: React.FC<RiskAssessmentPanelProps> = ({
             <dt className="text-slate-400">Food stock:</dt>
             <dd className={foodStatusColor[assessment.food_stock_status ?? 'UNAVAILABLE'] ?? 'text-slate-500'}>
               {assessment.food_stock_status ?? 'UNAVAILABLE'}
-              {assessment.food_stock_units !== null && (
+              {assessment.food_stock_units != null && (
                 <span className="text-slate-300">
                   {' '}— {assessment.food_stock_units.toLocaleString()} units
                 </span>
@@ -143,7 +143,7 @@ const RiskAssessmentPanel: React.FC<RiskAssessmentPanelProps> = ({
         </dl>
 
         {/* ETA assumption note */}
-        {assessment.estimated_delivery_minutes !== null && (
+        {assessment.estimated_delivery_minutes != null && (
           <p className="text-xs text-slate-500 mt-2 italic">
             Estimate uses 10-minute loading time and 30 km/h travel speed. This is not a guaranteed arrival time.
           </p>
