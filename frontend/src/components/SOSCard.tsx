@@ -51,9 +51,27 @@ const SOSCard: React.FC<SOSCardProps> = ({ request }) => {
         <PriorityBadge score={request.priority_score} />
       </div>
       
-      <p className="text-sm text-slate-300 mb-4 line-clamp-2 leading-relaxed">
+      <p className="text-sm text-slate-300 mb-2 line-clamp-2 leading-relaxed">
         {request.description}
       </p>
+
+      {/* Logistics summary (persisted data) */}
+      {(request.affected_people != null && request.affected_people > 0 || request.nearest_warehouse_name) && (
+        <p className="text-xs text-slate-400 mb-4 leading-relaxed">
+          {request.affected_people != null && request.affected_people > 0 && (
+            <span>{request.affected_people} affected</span>
+          )}
+          {request.distance_from_impact_km != null && (
+            <span> · {request.distance_from_impact_km} km from impact</span>
+          )}
+          {request.nearest_warehouse_name && (
+            <span> · {request.nearest_warehouse_name} {request.warehouse_distance_km != null ? `${request.warehouse_distance_km} km` : ''}</span>
+          )}
+          {request.estimated_delivery_minutes != null && (
+            <span> · ETA {request.estimated_delivery_minutes} min</span>
+          )}
+        </p>
+      )}
 
       <div className="flex justify-between items-center text-xs border-t border-slate-700/50 pt-3">
         <div className="flex text-amber-400">

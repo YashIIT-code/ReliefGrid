@@ -56,6 +56,15 @@ export interface SOSRequest {
   priority_score: number;
   priority_explanation?: string;
   created_at: string;
+  affected_people?: number;
+  distance_from_impact_km?: number | null;
+  nearest_impact_zone?: string | null;
+  nearest_warehouse_id?: number | null;
+  nearest_warehouse_name?: string | null;
+  warehouse_distance_km?: number | null;
+  estimated_delivery_minutes?: number | null;
+  food_stock_units?: number | null;
+  food_stock_status?: string | null;
 }
 
 export interface RiskAssessment {
@@ -64,12 +73,22 @@ export interface RiskAssessment {
   factors: string[];
   explanation: string;
   recommended_action: string;
+  affected_people: number;
+  distance_from_impact_km: number | null;
+  nearest_impact_zone: string | null;
+  nearest_warehouse_id: number | null;
+  nearest_warehouse_name: string | null;
+  warehouse_distance_km: number | null;
+  estimated_delivery_minutes: number | null;
+  food_stock_units: number | null;
+  food_stock_status: string | null;
 }
 
 export interface RiskCheckHistoryEntry {
   time: string;
   risk_category: string;
   score: number;
+  affected_people: number;
   result: 'Current' | 'Superseded' | 'Dispatched';
 }
 

@@ -23,7 +23,7 @@ export const client = {
   updateWarehouse: (id: number, data: any) => api.put(`/api/warehouses/${id}`, data),
   getSOSRequests: () => api.get('/api/sos/'),
   createSOSRequest: (data: any) => api.post('/api/sos/', data),
-  assessSOSRisk: (data: { category: string; severity: number; description: string }) =>
+  assessSOSRisk: (data: { category: string; severity: number; description: string; affected_people: number; lat: number; lng: number }) =>
     api.post('/api/sos/assess', data),
   updateSOSStatus: (id: number, status: string) => api.put(`/api/sos/${id}/status?status=${status}`),
   parseWhatsApp: (data: any) => api.post('/api/whatsapp/parse', data),

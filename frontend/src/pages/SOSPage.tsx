@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { client } from '../api/client';
 import { SOSRequest, RiskAssessment, RiskCheckHistoryEntry } from '../types';
 import SOSCard from '../components/SOSCard';
@@ -23,12 +23,25 @@ function saveHistory(entries: RiskCheckHistoryEntry[]) {
 }
 
 // ---------------------------------------------------------------------------
+// Generate mock coordinates ONCE per draft
+// ---------------------------------------------------------------------------
+function generateMockCoords(): { lat: number; lng: number } {
+  return {
+    lat: +(19.08 + Math.random() * 0.05).toFixed(6),
+    lng: +(72.88 + Math.random() * 0.05).toFixed(6),
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Snapshot of form values at assessment time
 // ---------------------------------------------------------------------------
 interface AssessedSnapshot {
   category: string;
   severity: number;
   description: string;
+  affected_people: number;
+  lat: number;
+  lng: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -38,11 +51,15 @@ const SOSPage = () => {
   const [requests, setRequests] = useState<SOSRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Form state (unchanged field names)
+  // Form state
   const [name, setName] = useState('');
   const [cat, setCat] = useState('medical');
   const [desc, setDesc] = useState('');
   const [severity, setSeverity] = useState(3);
+  const [affectedPeople, setAffectedPeople] = useState(0);
+
+  // Draft coordinates — generated once, reused for assess & dispatch
+  const draftCoords = useRef(generateMockCoords());
 
   // Risk assessment workflow state
   const [assessment, setAssessment] = useState<RiskAssessment | null>(null);
@@ -79,10 +96,14 @@ const SOSPage = () => {
   // -----------------------------------------------------------------------
   const checkStaleness = useCallback(() => {
     if (!assessedSnapshot || !assessment) return;
+    const coords = draftCoords.current;
     const changed =
       cat !== assessedSnapshot.category ||
       severity !== assessedSnapshot.severity ||
-      desc !== assessedSnapshot.description;
+      desc !== assessedSnapshot.description ||
+      affectedPeople !== assessedSnapshot.affected_people ||
+      coords.lat !== assessedSnapshot.lat ||
+      coords.lng !== assessedSnapshot.lng;
     if (changed && !isStale) {
       setIsStale(true);
       setConfirmed(false);
@@ -99,7 +120,7 @@ const SOSPage = () => {
 
       setStatusMsg('Assessment is now stale. Please run the risk check again.');
     }
-  }, [cat, severity, desc, assessedSnapshot, assessment, isStale]);
+  }, [cat, severity, desc, affectedPeople, assessedSnapshot, assessment, isStale]);
 
   useEffect(() => {
     checkStaleness();
@@ -111,15 +132,26 @@ const SOSPage = () => {
   const handleAssess = async () => {
     setAssessing(true);
     setStatusMsg('Running risk assessment…');
+    const coords = draftCoords.current;
     try {
       const res = await client.assessSOSRisk({
         category: cat,
         severity,
         description: desc,
+        affected_people: affectedPeople,
+        lat: coords.lat,
+        lng: coords.lng,
       });
       const data: RiskAssessment = res.data;
       setAssessment(data);
-      setAssessedSnapshot({ category: cat, severity, description: desc });
+      setAssessedSnapshot({
+        category: cat,
+        severity,
+        description: desc,
+        affected_people: affectedPeople,
+        lat: coords.lat,
+        lng: coords.lng,
+      });
       setIsStale(false);
       setConfirmed(false);
 
@@ -128,6 +160,7 @@ const SOSPage = () => {
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         risk_category: data.risk_category,
         score: data.priority_score,
+        affected_people: affectedPeople,
         result: 'Current',
       };
       setHistory((prev) => {
@@ -157,14 +190,16 @@ const SOSPage = () => {
   const handleDispatch = async () => {
     setDispatching(true);
     setStatusMsg('Dispatching SOS…');
+    const coords = draftCoords.current;
     try {
       await client.createSOSRequest({
         name,
         category: cat,
         description: desc,
         severity,
-        lat: 19.08 + Math.random() * 0.05, // Mock lat
-        lng: 72.88 + Math.random() * 0.05, // Mock lng
+        affected_people: affectedPeople,
+        lat: coords.lat,
+        lng: coords.lng,
       });
 
       // Mark the current history entry as Dispatched
@@ -177,15 +212,17 @@ const SOSPage = () => {
         return updated;
       });
 
-      // Reset form
+      // Reset form & generate fresh coords for next draft
       setName('');
       setDesc('');
       setSeverity(3);
       setCat('medical');
+      setAffectedPeople(0);
       setAssessment(null);
       setAssessedSnapshot(null);
       setIsStale(false);
       setConfirmed(false);
+      draftCoords.current = generateMockCoords();
 
       fetchSOS();
       setStatusMsg('SOS dispatched successfully and added to Active Emergency Queue.');
@@ -255,6 +292,26 @@ const SOSPage = () => {
               <option value="rescue">Search &amp; Rescue</option>
               <option value="fire">Fire Emergency</option>
             </select>
+          </div>
+
+          {/* Number of affected people (new) */}
+          <div>
+            <label htmlFor="sos-affected-people" className="block text-sm text-slate-400 mb-1">
+              Number of affected people
+            </label>
+            <input
+              id="sos-affected-people"
+              type="number"
+              min="0"
+              step="1"
+              value={affectedPeople}
+              onChange={(e) => setAffectedPeople(Math.max(0, parseInt(e.target.value) || 0))}
+              aria-describedby="sos-affected-people-hint"
+              className="w-full bg-navy-900 border border-slate-700 rounded-lg p-2.5 text-slate-200 focus:border-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            />
+            <p id="sos-affected-people-hint" className="text-xs text-slate-500 mt-1">
+              Admin estimate. Enter 0 if unknown.
+            </p>
           </div>
 
           {/* Severity */}
@@ -333,10 +390,13 @@ const SOSPage = () => {
             </h4>
             <ul className="space-y-1.5 text-xs text-slate-300">
               {history.map((h, i) => (
-                <li key={i} className="flex items-center gap-2">
+                <li key={i} className="flex items-center gap-2 flex-wrap">
                   <span className="text-slate-500">{h.time}</span>
                   <span className="font-semibold">{h.risk_category}</span>
                   <span>— {h.score.toFixed(0)}</span>
+                  {h.affected_people > 0 && (
+                    <span className="text-slate-400">· {h.affected_people} affected</span>
+                  )}
                   <span className="text-slate-500">—</span>
                   <span
                     className={

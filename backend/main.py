@@ -34,11 +34,40 @@ app.include_router(allocation.router)
 @app.on_event("startup")
 def on_startup():
     Base.metadata.create_all(bind=engine)
+    _migrate_sos_columns()
     db = SessionLocal()
     try:
         seed_database(db)
     finally:
         db.close()
+
+
+def _migrate_sos_columns():
+    """Add new SOS columns to an existing SQLite table if missing."""
+    new_cols = {
+        "affected_people": "INTEGER DEFAULT 0",
+        "distance_from_impact_km": "REAL",
+        "nearest_impact_zone": "TEXT",
+        "nearest_warehouse_id": "INTEGER",
+        "nearest_warehouse_name": "TEXT",
+        "warehouse_distance_km": "REAL",
+        "estimated_delivery_minutes": "INTEGER",
+        "food_stock_units": "INTEGER",
+        "food_stock_status": "TEXT",
+    }
+    with engine.connect() as conn:
+        result = conn.execute(
+            __import__("sqlalchemy").text("PRAGMA table_info(sos_requests)")
+        )
+        existing = {row[1] for row in result}
+        for col_name, col_type in new_cols.items():
+            if col_name not in existing:
+                conn.execute(
+                    __import__("sqlalchemy").text(
+                        f"ALTER TABLE sos_requests ADD COLUMN {col_name} {col_type}"
+                    )
+                )
+        conn.commit()
 
 @app.get("/")
 def read_root():

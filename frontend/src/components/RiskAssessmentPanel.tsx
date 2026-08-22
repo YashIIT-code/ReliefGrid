@@ -16,6 +16,13 @@ const riskBadgeClass: Record<string, string> = {
   LOW: 'priority-low',
 };
 
+const foodStatusColor: Record<string, string> = {
+  ADEQUATE: 'text-emerald-400',
+  LOW: 'text-amber-400',
+  OUT_OF_STOCK: 'text-red-400',
+  UNAVAILABLE: 'text-slate-500',
+};
+
 const RiskAssessmentPanel: React.FC<RiskAssessmentPanelProps> = ({
   assessment,
   isStale,
@@ -65,6 +72,82 @@ const RiskAssessmentPanel: React.FC<RiskAssessmentPanelProps> = ({
           Recommended response:
         </p>
         <p className="text-sm text-slate-200">{assessment.recommended_action}</p>
+      </div>
+
+      {/* --- Logistics Data Points --- */}
+      <div className="mb-3 pt-3 border-t border-slate-700/50">
+        <p className="text-xs uppercase tracking-wider text-slate-400 mb-2 font-medium">
+          Logistics Overview
+        </p>
+        <dl className="space-y-1 text-sm">
+          {/* Affected people */}
+          <div className="flex gap-1">
+            <dt className="text-slate-400">Affected people:</dt>
+            <dd className="text-slate-200">{assessment.affected_people.toLocaleString()}</dd>
+          </div>
+
+          {/* Impact zone distance */}
+          <div className="flex gap-1">
+            <dt className="text-slate-400">Distance to impact zone:</dt>
+            <dd className="text-slate-200">
+              {assessment.distance_from_impact_km !== null
+                ? `${assessment.distance_from_impact_km} km`
+                : 'Impact distance unavailable'}
+            </dd>
+          </div>
+
+          {assessment.nearest_impact_zone && (
+            <div className="flex gap-1">
+              <dt className="text-slate-400">Nearest impact zone:</dt>
+              <dd className="text-slate-200">{assessment.nearest_impact_zone}</dd>
+            </div>
+          )}
+
+          {/* Warehouse */}
+          <div className="flex gap-1">
+            <dt className="text-slate-400">Nearest warehouse:</dt>
+            <dd className="text-slate-200">
+              {assessment.nearest_warehouse_name ?? 'Unavailable'}
+            </dd>
+          </div>
+
+          {assessment.warehouse_distance_km !== null && (
+            <div className="flex gap-1">
+              <dt className="text-slate-400">Warehouse distance:</dt>
+              <dd className="text-slate-200">{assessment.warehouse_distance_km} km</dd>
+            </div>
+          )}
+
+          {/* ETA */}
+          <div className="flex gap-1">
+            <dt className="text-slate-400">Estimated delivery:</dt>
+            <dd className="text-slate-200">
+              {assessment.estimated_delivery_minutes !== null
+                ? `${assessment.estimated_delivery_minutes} minutes`
+                : 'Delivery estimate unavailable'}
+            </dd>
+          </div>
+
+          {/* Food stock */}
+          <div className="flex gap-1">
+            <dt className="text-slate-400">Food stock:</dt>
+            <dd className={foodStatusColor[assessment.food_stock_status ?? 'UNAVAILABLE'] ?? 'text-slate-500'}>
+              {assessment.food_stock_status ?? 'UNAVAILABLE'}
+              {assessment.food_stock_units !== null && (
+                <span className="text-slate-300">
+                  {' '}— {assessment.food_stock_units.toLocaleString()} units
+                </span>
+              )}
+            </dd>
+          </div>
+        </dl>
+
+        {/* ETA assumption note */}
+        {assessment.estimated_delivery_minutes !== null && (
+          <p className="text-xs text-slate-500 mt-2 italic">
+            Estimate uses 10-minute loading time and 30 km/h travel speed. This is not a guaranteed arrival time.
+          </p>
+        )}
       </div>
 
       {/* Stale / current status — small aria-live region */}
