@@ -44,6 +44,8 @@ export interface Warehouse {
   vehicles: number;
 }
 
+export type SOSStatus = 'pending' | 'completed' | 'not_completed';
+
 export interface SOSRequest {
   id: number;
   name: string;
@@ -52,7 +54,7 @@ export interface SOSRequest {
   category: string;
   description: string;
   severity: number;
-  status: string;
+  status: SOSStatus | string;
   priority_score: number;
   priority_explanation?: string;
   created_at: string;

@@ -247,6 +247,16 @@ const SOSPage = () => {
     (!isHighOrCritical || confirmed);
 
   // -----------------------------------------------------------------------
+  // Handle SOS Status Update
+  // -----------------------------------------------------------------------
+  const handleUpdateStatus = async (id: number, status: string) => {
+    const res = await client.updateSOSStatus(id, status);
+    setRequests((prev) =>
+      prev.map((req) => (req.id === id ? { ...req, status: res.data.status } : req))
+    );
+  };
+
+  // -----------------------------------------------------------------------
   // Render
   // -----------------------------------------------------------------------
   return (
@@ -426,7 +436,9 @@ const SOSPage = () => {
           ) : requests.length === 0 ? (
             <p className="text-slate-500">No active requests.</p>
           ) : (
-            requests.map((req) => <SOSCard key={req.id} request={req} />)
+            requests.map((req) => (
+              <SOSCard key={req.id} request={req} onUpdateStatus={handleUpdateStatus} />
+            ))
           )}
         </div>
       </div>

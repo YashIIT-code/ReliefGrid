@@ -66,6 +66,9 @@ def create_sos_request(sos: SOSCreate, db: Session = Depends(get_db)):
 
 @router.put("/{id}/status", response_model=SOSResponse)
 def update_sos_status(id: int, status: str, db: Session = Depends(get_db)):
+    if status not in ("pending", "completed", "not_completed"):
+        raise HTTPException(status_code=400, detail="Invalid status")
+
     db_sos = db.query(SOSRequest).filter(SOSRequest.id == id).first()
     if not db_sos:
         raise HTTPException(status_code=404, detail="SOS request not found")
