@@ -55,23 +55,51 @@ const SOSCard: React.FC<SOSCardProps> = ({ request }) => {
         {request.description}
       </p>
 
-      {/* Logistics summary (persisted data) */}
-      {(request.affected_people != null && request.affected_people > 0 || request.nearest_warehouse_name) && (
-        <p className="text-xs text-slate-400 mb-4 leading-relaxed">
-          {request.affected_people != null && request.affected_people > 0 && (
-            <span>{request.affected_people} affected</span>
-          )}
-          {request.distance_from_impact_km != null && (
-            <span> · {request.distance_from_impact_km} km from impact</span>
-          )}
-          {request.nearest_warehouse_name && (
-            <span> · {request.nearest_warehouse_name} {request.warehouse_distance_km != null ? `${request.warehouse_distance_km} km` : ''}</span>
-          )}
-          {request.estimated_delivery_minutes != null && (
-            <span> · ETA {request.estimated_delivery_minutes} min</span>
-          )}
-        </p>
-      )}
+      {/* Logistics snapshot */}
+      <section aria-label="Logistics snapshot" className="mb-4 pt-3 border-t border-slate-700/50">
+        <h5 className="text-xs uppercase tracking-wider text-slate-400 mb-2 font-semibold">Logistics Snapshot</h5>
+        <dl className="space-y-1.5 text-xs">
+          <div className="flex justify-between">
+            <dt className="text-slate-400">Affected people</dt>
+            <dd className="text-slate-200 font-medium">
+              {request.affected_people != null ? request.affected_people.toLocaleString() : 'Not recorded'}
+            </dd>
+          </div>
+          <div className="flex justify-between">
+            <dt className="text-slate-400">Distance to impact</dt>
+            <dd className="text-slate-200 font-medium">
+              {request.distance_from_impact_km != null ? `${request.distance_from_impact_km.toFixed(1)} km` : 'Unavailable'}
+            </dd>
+          </div>
+          <div className="flex justify-between">
+            <dt className="text-slate-400">Nearest warehouse</dt>
+            <dd className="text-slate-200 font-medium">
+              {request.nearest_warehouse_name ?? 'Unavailable'}
+            </dd>
+          </div>
+          <div className="flex justify-between">
+            <dt className="text-slate-400">Estimated delivery</dt>
+            <dd className="text-slate-200 font-medium">
+              {request.estimated_delivery_minutes != null ? `${request.estimated_delivery_minutes} minutes` : 'Unavailable'}
+            </dd>
+          </div>
+          <div className="flex justify-between">
+            <dt className="text-slate-400">Food stock</dt>
+            <dd className="text-slate-200 font-medium">
+              {request.food_stock_status ? (
+                <>
+                  <span className={
+                    request.food_stock_status === 'ADEQUATE' ? 'text-emerald-400' :
+                    request.food_stock_status === 'LOW' ? 'text-amber-400' :
+                    'text-red-400'
+                  }>{request.food_stock_status}</span>
+                  {request.food_stock_units != null ? ` — ${request.food_stock_units.toLocaleString()} units` : ''}
+                </>
+              ) : 'Unavailable'}
+            </dd>
+          </div>
+        </dl>
+      </section>
 
       <div className="flex justify-between items-center text-xs border-t border-slate-700/50 pt-3">
         <div className="flex text-amber-400">
