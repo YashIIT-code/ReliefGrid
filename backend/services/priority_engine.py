@@ -50,12 +50,88 @@ def calculate_hospital_priority(hospital: Hospital) -> tuple[float, str]:
     
     return float(score), explanation
 
-def calculate_sos_priority(sos_request: SOSRequest) -> tuple[float, str]:
-    severity_score = sos_request.severity * 20  # 1-5 -> 20-100
-    category_weight = {'rescue': 1.0, 'ambulance': 0.95, 'medicine': 0.85, 'food': 0.7, 'shelter': 0.6}
-    
-    score = severity_score * category_weight.get(sos_request.category, 0.5)
+def calculate_sos_risk(category: str, severity: int, description: str) -> dict:
+    """Shared risk calculation used by both assess and dispatch endpoints.
+
+    Returns a dict with priority_score, risk_category, factors,
+    explanation, and recommended_action.
+    """
+    severity_score = severity * 20  # 1-5 -> 20-100
+    category_weight = {
+        'rescue': 1.0,
+        'ambulance': 0.95,
+        'medical': 0.95,
+        'fire': 0.9,
+        'medicine': 0.85,
+        'food': 0.7,
+        'shelter': 0.6,
+    }
+
+    weight = category_weight.get(category, 0.5)
+    score = severity_score * weight
     score = min(max(score, 0), 100)
-    
-    explanation = f"Severity {sos_request.severity} for {sos_request.category}."
-    return float(score), explanation
+
+    # --- risk category ---
+    if score >= 80:
+        risk_category = "CRITICAL"
+    elif score >= 60:
+        risk_category = "HIGH"
+    elif score >= 30:
+        risk_category = "MEDIUM"
+    else:
+        risk_category = "LOW"
+
+    # --- factors ---
+    factors: list[str] = []
+    factors.append(f"Severity level is {severity}")
+    category_labels = {
+        'rescue': 'Search & Rescue',
+        'medical': 'Medical / Ambulance',
+        'ambulance': 'Ambulance',
+        'fire': 'Fire Emergency',
+        'food': 'Food & Water',
+        'medicine': 'Medicine',
+        'shelter': 'Shelter',
+    }
+    factors.append(f"{category_labels.get(category, category.capitalize())} emergency category")
+    if severity >= 4:
+        factors.append("Immediate response may be required")
+    if description and len(description) > 100:
+        factors.append("Detailed incident description provided")
+
+    # --- explanation ---
+    if risk_category == "CRITICAL":
+        explanation = "Immediate response risk detected."
+    elif risk_category == "HIGH":
+        explanation = "High urgency — timely dispatch recommended."
+    elif risk_category == "MEDIUM":
+        explanation = "Moderate risk — standard dispatch procedures apply."
+    else:
+        explanation = "Low risk — routine handling appropriate."
+
+    # --- recommended action ---
+    action_map = {
+        "CRITICAL": "Prioritize immediate dispatch review.",
+        "HIGH": "Escalate for prompt dispatch.",
+        "MEDIUM": "Schedule dispatch following standard protocol.",
+        "LOW": "Queue for routine dispatch.",
+    }
+    recommended_action = action_map[risk_category]
+
+    return {
+        "priority_score": float(score),
+        "risk_category": risk_category,
+        "factors": factors,
+        "explanation": explanation,
+        "recommended_action": recommended_action,
+    }
+
+
+def calculate_sos_priority(sos_request: SOSRequest) -> tuple[float, str]:
+    """Existing interface kept intact — delegates to shared function."""
+    result = calculate_sos_risk(
+        category=sos_request.category,
+        severity=sos_request.severity,
+        description=sos_request.description,
+    )
+    return result["priority_score"], result["explanation"]

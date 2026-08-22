@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
 from models.sos_request import SOSRequest
-from schemas.sos_request import SOSCreate, SOSResponse
-from services.priority_engine import calculate_sos_priority
+from schemas.sos_request import SOSCreate, SOSResponse, SOSAssessRequest, SOSAssessResponse
+from services.priority_engine import calculate_sos_priority, calculate_sos_risk
 from typing import Optional
 
 router = APIRouter(prefix="/api/sos", tags=["sos"])
@@ -14,6 +14,16 @@ def get_sos_requests(category: Optional[str] = None, db: Session = Depends(get_d
     if category:
         query = query.filter(SOSRequest.category == category)
     return query.order_by(SOSRequest.priority_score.desc()).all()
+
+@router.post("/assess", response_model=SOSAssessResponse)
+def assess_sos_risk(payload: SOSAssessRequest):
+    """Calculate risk assessment without creating a database record."""
+    result = calculate_sos_risk(
+        category=payload.category,
+        severity=payload.severity,
+        description=payload.description,
+    )
+    return result
 
 @router.post("/", response_model=SOSResponse)
 def create_sos_request(sos: SOSCreate, db: Session = Depends(get_db)):
@@ -43,3 +53,4 @@ def delete_sos_request(id: int, db: Session = Depends(get_db)):
     db.delete(db_sos)
     db.commit()
     return {"message": "Deleted"}
+

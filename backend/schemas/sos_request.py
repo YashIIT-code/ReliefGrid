@@ -21,3 +21,16 @@ class SOSResponse(SOSBase):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+class SOSAssessRequest(BaseModel):
+    category: str
+    severity: int
+    description: str
+
+class SOSAssessResponse(BaseModel):
+    priority_score: float
+    risk_category: str
+    factors: list[str]
+    explanation: str
+    recommended_action: str
+

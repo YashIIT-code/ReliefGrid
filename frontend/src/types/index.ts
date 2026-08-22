@@ -58,6 +58,21 @@ export interface SOSRequest {
   created_at: string;
 }
 
+export interface RiskAssessment {
+  priority_score: number;
+  risk_category: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  factors: string[];
+  explanation: string;
+  recommended_action: string;
+}
+
+export interface RiskCheckHistoryEntry {
+  time: string;
+  risk_category: string;
+  score: number;
+  result: 'Current' | 'Superseded' | 'Dispatched';
+}
+
 export interface DisasterZone {
   id: number;
   name: string;
